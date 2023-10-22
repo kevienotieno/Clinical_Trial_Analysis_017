@@ -1,0 +1,384 @@
+---
+title: "Heart"
+author: "Kevien Otieno"
+date: "2023-10-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#loading packages
+```{r}
+pacman::p_load(dplyr, tidyr, tidyverse, janitor, ggplot2, readxl,VennDiagram, lubridate)
+```
+
+#Heart
+```{r}
+Heart = read.csv("Heart.csv",
+                   check.names = F,
+                   na= "")
+```
+
+```{r}
+#converting sex, Age and Study Status columns to factor
+Heart$Sex = as.factor(Heart$Sex)
+Heart$Age = as.factor(Heart$Age)
+Heart$`Study Status` = as.factor(Heart$`Study Status`)
+```
+
+```{r}
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Heart))
+
+# Loop through each row
+for (i in 1:nrow(Heart)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Heart$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+```
+
+```{r}
+#creating a countries dataframe
+country_df= data.frame(country)
+```
+
+```{r}
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+```
+
+```{r}
+ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries doing clinical studies")+
+  theme_minimal()
+```
+From the studies conducted, United States leads on the No of studies being conducted.
+Recommendation: Countries In Africa should increase their research related to Heart.
+
+#To check if no of studies have been increasing over the years
+```{r}
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Heart)) 
+
+for (i in 1:nrow(Heart)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Heart$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+```
+
+```{r}
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Heart dataframe
+Heart = cbind(Heart, year1)
+```
+
+```{r}
+#converting year to numeric
+Heart$year <- as.numeric(Heart$year)
+```
+
+```{r}
+#grouping the years to the know the No of studies conducted each year
+a= c(1,3,6,12,18,24,30,36,42,48,54,57,58)
+year_studies = Heart %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+```
+
+```{r,}
+#a line plot to show No of studies over years
+ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of studies over the years") +
+  theme_minimal()
+```
+
+The trend line shows an increase in the number of studies over years indicating that most countries are investing in research.
+
+#conditons
+```{r}
+#extracting Conditons and calculating the number of each
+Conditions = Heart %>% 
+  group_by(Conditions) %>% 
+  summarise(`No of studies` = n()) 
+#sorting the conditions by the No of studies
+Conditions = Conditions[order(Conditions$`No of studies`, 
+                              decreasing = TRUE), ]
+#top 5 conditions are being studied
+plot_conditions =head(Conditions, 5)
+```
+
+```{r}
+#bar graph to show the leading condition
+ggplot(plot_conditions, aes(x= `No of studies`, y = Conditions, fill= Conditions))+
+  geom_bar(stat = "identity", col ="black")+
+  coord_cartesian()+
+  labs(Title= "Top five conditions being studied")+
+  theme_minimal()
+```
+
+#Interventions
+```{r}
+#grouping the interventions
+Interventions = Heart %>% 
+  group_by(Interventions) %>% 
+  summarise(`No of studies` = n())
+#sorting the interventions using the No of Studies
+Interventions = Interventions[order(Interventions$`No of studies` , decreasing = TRUE), ]
+```
+
+```{r}
+#getting the top 10 interventions
+Interventions_plot = head(Interventions, 10)
+```
+
+```{r}
+#Bar plot to clearly display the interventions mostly used
+ggplot(Interventions_plot, aes(x=`No of studies`, y=Interventions))+
+  geom_bar(stat = "identity",fill=c("red","blue","green","gray","black","yellow","purple","pink","navy","orange"))+
+  coord_cartesian()+
+  labs(title = "Most common interventions", x= "Interventions", y ="No of Studies")+
+  theme_minimal()
+```
+
+#Major Sponsors for the different clinical trials
+```{r}
+#Grouping the sponsors
+Sponsors = Heart %>% 
+  group_by(Sponsor) %>% 
+  summarise(`No of studies` =n())
+#Sorting the sponsors according to the no of studies
+Sponsors = Sponsors[order(Sponsors$`No of studies`, decreasing = TRUE), ]
+```
+
+```{r}
+Sponsors_plot = head(Sponsors, 5)
+```
+
+#clear display of the lead sponsors
+```{r}
+ggplot(Sponsors_plot, aes(x= `No of studies`, y= Sponsor))+
+  geom_bar(stat ="identity", fill= c("red","blue","green","gray","black"))+
+  coord_cartesian()+
+  labs(title ="Lead sponsors for the different clinical studies")+
+  theme_minimal()
+```
+
+
+#colaborators
+```{r}
+#grouping the colaborators
+colaborator= Heart %>% 
+  group_by(Collaborators) %>% 
+  summarise(`No of studies`= n())
+#sorting the colaborators in descending order
+colaborator= colaborator[order(colaborator$`No of studies`, decreasing = TRUE), ]
+```
+
+```{r}
+#obtaining the top 5 colaborators
+top_colaborators= head(colaborator, 5)
+```
+```{r}
+#bar plot for a clear visual
+ggplot(top_colaborators, aes(x=`No of studies`, y= Collaborators ))+
+  geom_bar(stat = "identity",fill= c("red","blue","green","gray","black"))+
+  coord_cartesian(xlim = c(0, max(top_colaborators$`No of studies`)))+
+  labs(title= "Investigating the top colaborators")+
+  theme_minimal()
+```
+
+The NA indicates that most studies lacked people collaborating with them
+
+#Sex that is mostly involved in the study
+```{r}
+#Grouping people of different sex
+Sex= Heart %>% 
+  group_by(Sex) %>% 
+  summarise(`No of studies`= n()) %>% 
+  filter(!is.na(Sex))
+```
+
+```{r}
+# Calculate percentages
+Sex$percentage4 <- Sex$`No of studies` / sum(Sex$`No of studies`) * 100
+
+# Create a pie chart
+ggplot(Sex, aes(x = Sex, y = `No of studies`, fill = Sex)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(
+    aes(label = paste0(round(percentage4, 1), "%")),
+    position = position_stack(vjust = 0.5)
+  )+
+  labs(
+    title = "Distribution of Studies by Sex",
+    fill = "Sex"
+  ) +
+  theme(legend.position = "right") +
+  scale_fill_manual(values = c("ALL" = "red", "FEMALE" = "blue", "MALE" = "green"))
+
+```
+From the pie chart most studies involved a combination of all genders.
+
+#Investigating which Kind of age group are mostly involved in studies
+```{r}
+#grouping the age groups
+age_group = Heart %>% 
+  group_by(Age) %>% 
+  summarise(`No of studies`= n())
+percentage = ((age_group$`No of studies`)/sum(age_group$`No of studies`, na.rm = TRUE))*100
+```
+
+```{r}
+# Create a pie chart
+ggplot(age_group, aes(x = `No of studies`, y = Age, fill = Age)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(
+    aes(label = paste0(round(percentage, 1), "%")),
+    position = position_stack(vjust = 0.5)
+  )+
+  labs(
+    title = "Distribution of Studies by Age groups",
+    fill = "Age group"
+  ) +
+  theme(legend.position = "right")
+
+```
+From the graph most studies involved adults.
+
+#Investigating the study status
+```{r}
+#grouping the data according to Study Status
+study_status= Heart %>% 
+  group_by(`Study Status`) %>% 
+  summarise(`No of Studies`= n())
+#sorting No of studies in descending order
+study_status= study_status[order(study_status$`No of Studies`, decreasing = TRUE), ]
+
+#obtaining percentages for the different study status
+percentage1= ((study_status$`No of Studies`)/sum(study_status$`No of Studies`))*100
+```
+```{r}
+ggplot(study_status, aes(x=`No of Studies`, y= `Study Status`, fill =`Study Status`))+
+  geom_bar(stat = "identity")+
+  coord_cartesian()+
+  geom_text(aes(label= paste0(round(percentage1, 1), "%"), vjust = 0.5, hjust = 0.1))+
+  labs(title = "Investigating the study status")+
+  theme_minimal()
+
+```
+
+We can see that most studies were completed
+
+#Funder Type
+```{r}
+#grouping the Funder types
+Funder.Type = Heart %>% 
+  group_by(`Funder Type`) %>% 
+  summarise(`No of Studies`=n())
+#obtaining the percentages
+percentage2= ((Funder.Type$`No of Studies`)/sum(Funder.Type$`No of Studies`))*100
+```
+```{r}
+ggplot(Funder.Type, aes(x=`Funder Type`, y = `No of Studies`, fill = `Funder Type`))+
+  geom_bar(stat = "identity")+
+  geom_text(aes(label=(paste0(round(percentage2,1),"%")),vjust = 0.2, hjust= 0.5))+
+  labs(title = "Funder for te different dtudies Conducted")+
+  theme_minimal()
+
+```
+
+#study type
+```{r}
+Study_type= Heart %>% 
+  group_by(`Study Type`) %>% 
+  summarise(`No of Studies`= n())
+```
+```{r}
+# Calculate percentages
+percentage5 <- Study_type$`No of Studies` / sum(Study_type$`No of Studies`) * 100
+
+# Create a pie chart
+ggplot(Study_type, aes(x = `Study Type`, y = `No of Studies`, fill = `Study Type`)) +
+  geom_bar(stat = "identity", width = 1) +
+  geom_text(
+    aes(label = paste0(round(percentage5, 1), "%")),
+    position = position_stack(vjust = 0.5)
+  )+
+  labs(
+    title = "Distribution of Studies by study type",
+    fill = "`Study Type`"
+  ) +
+  theme(legend.position = "right")+
+  scale_fill_manual(values= c("INTERVENTIONAL" = "blue", "OBSERVATIONAL" = "green","EXPANDED_ACCESS" = "red"))
+```
+
+From the graph most studies involved the use of a drug or Interventional.
+
+#phases
+```{r}
+#grouping the data to different phases
+Phases = Heart %>% 
+  group_by(Phases) %>% 
+  summarise(`No of Studies`= n()) %>% 
+  filter(!is.na(Phases)) %>% 
+  filter(Phases != "NA")
+#obtaining the percentages
+percentage3= ((Phases$`No of Studies`)/sum(Phases$`No of Studies`))*100
+```
+
+```{r}
+ggplot(Phases, aes(x= `No of Studies`, y= Phases, fill= Phases))+
+  geom_bar(stat = "identity")+
+  coord_cartesian()+
+  geom_text(aes(label=(paste0(round(percentage3,1),"%")),vjust = 0.2, hjust= 0.5))+
+  labs(title = "Checking different studies in the study")+
+  theme_minimal()
+  
+
+```
+#Study results
+```{r}
+#grouping the study results
+Study_results = Heart %>% 
+  group_by(`Study Results`) %>% 
+  summarise(`No of Studies`= n())
+#obtaining the percentages
+percentage4= ((Study_results$`No of Studies`)/sum(Study_results$`No of Studies`))*100
+```
+```{r}
+ggplot(Study_results, aes(x=`Study Results`, y= `No of Studies`, fill =`Study Results`))+
+  geom_bar(stat = "identity", )+
+  geom_text(aes(label=(paste0(round(percentage4,1),"%")),vjust = 0, hjust= 0.5))+
+  labs(title = "No of studies with results")+
+  scale_fill_manual(values = c("NO"= "blue", "YES"= "green"))
+```
+
+From the graph we can clearly see that only a few of the studies yielded results.

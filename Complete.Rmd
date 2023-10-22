@@ -1,0 +1,584 @@
+---
+title: "Complete Analysis of clinical trials"
+author: "Group 17"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: leonids
+---
+# **Analysis of all the clinical trials**
+
+## **How best can you analyze the data?**
+Our tool of analysis was R.
+In each dataset we first loaded it then proceeded to understand it's characteristics e.g. the variables,data types,and plotted the distribution of each variable they all had similar variables
+```{r,warning=FALSE,echo=FALSE, warning=FALSE, message=FALSE}
+library(skimr)
+
+malaria = read.csv("Malaria-studies.csv",
+                   check.names = F,
+                   na = "")
+skim(malaria)
+```
+We converted these variables to their respective data types for easier analysis and checked them 
++ Study status
++ Funder types
++ Study results
++ Sex
++ Age
++ Phases
++ Study type
+```{r,echo=FALSE}
+library(tidyverse)
+malaria <- malaria |>
+  mutate(`Sex` = factor(`Sex`),`Age` = factor(`Age`),`Study Status` =factor(`Study Status`),`Study Results` = factor(`Study Results`), `Study Type` = factor(`Study Type`), `Phases` = factor(`Phases`))
+```
+```{r, echo=FALSE}
+glimpse(malaria)
+```
+We did not remove the missing values represented as "NA'S" due to the fact that it may introduce selection bias if it was not missing completely at random and produce information loss
+
+## **Can you identify trends in the clinical studies**
+
+Horizontal Bar charts to identify the leading countries in research.
+
+```{r,echo=FALSE}
+Malaria = read.csv("Malaria-studies.csv",
+                   check.names = F,
+                   na = "")
+
+#converting sex, Age and Study Status columns to factor
+Malaria$Sex = as.factor(Malaria$Sex)
+Malaria$Age = as.factor(Malaria$Age)
+Malaria$`Study Status` = as.factor(Malaria$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Malaria))
+
+# Loop through each row
+for (i in 1:nrow(Malaria)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Malaria$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+see <-ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries conducting research on Malaria")+
+  theme_minimal()
+
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Malaria)) 
+
+for (i in 1:nrow(Malaria)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Malaria$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Malaria dataframe
+Malaria = cbind(Malaria, year1)
+
+#converting year to numeric
+Malaria$year <- as.numeric(Malaria$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(1,2,5,9,10,11,12,15,16,20,25,30)
+year_studies = Malaria %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+
+#a line plot to show No of studies over years
+c <-ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of malaria studies over the years") +
+  theme_minimal()
+
+```
+
+```{r,echo=FALSE,include=FALSE}
+Covid = read.csv("Covid 19-studies.csv",
+                   check.names = F,
+                   na= "")
+
+#converting sex, Age and Study Status columns to factor
+Covid$Sex = as.factor(Covid$Sex)
+Covid$Age = as.factor(Covid$Age)
+Covid$`Study Status` = as.factor(Covid$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Covid))
+
+# Loop through each row
+for (i in 1:nrow(Covid)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Covid$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+you <-ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries conducting studies on Covid")+
+  theme_minimal()
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Covid)) 
+
+for (i in 1:nrow(Covid)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Covid$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Covid dataframe
+Covid = cbind(Covid, year1)
+
+#converting year to numeric
+Covid$year <- as.numeric(Covid$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(17,18)
+year_studies = Covid %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[-a, ]
+
+
+#a line plot to show No of studies over years
+we <-ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of Covid studies over the years") +
+  theme_minimal()
+
+```
+
+
+```{r,echo = FALSE}
+Cancer = read.csv("Cancer-studies.csv",
+                   check.names = F,
+                   na= "")
+
+#converting sex, Age and Study Status columns to factor
+Cancer$Sex = as.factor(Cancer$Sex)
+Cancer$Age = as.factor(Cancer$Age)
+Cancer$`Study Status` = as.factor(Cancer$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Cancer))
+
+# Loop through each row
+for (i in 1:nrow(Cancer)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Cancer$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+soon <-ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries conducting Cancer Research")+
+  theme_minimal()
+
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Cancer)) 
+
+for (i in 1:nrow(Cancer)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Cancer$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Cancer dataframe
+Cancer = cbind(Cancer, year1)
+
+#converting year to numeric
+Cancer$year <- as.numeric(Cancer$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(1,3,6,12,18,24,30,36,42,48,52)
+year_studies = Cancer %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+
+#a line plot to show No of studies over years
+J <- ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of Cancer studies over the years") +
+  theme_minimal()
+
+```
+
+```{r,echo=FALSE}
+Heart = read.csv("Heart.csv",
+                   check.names = F,
+                   na= "")
+
+#converting sex, Age and Study Status columns to factor
+Heart$Sex = as.factor(Heart$Sex)
+Heart$Age = as.factor(Heart$Age)
+Heart$`Study Status` = as.factor(Heart$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Heart))
+
+# Loop through each row
+for (i in 1:nrow(Heart)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Heart$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+good <- ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries doing CadioVascular research")+
+  theme_minimal()
+
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Heart)) 
+
+for (i in 1:nrow(Heart)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Heart$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Heart dataframe
+Heart = cbind(Heart, year1)
+
+#converting year to numeric
+Heart$year <- as.numeric(Heart$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(1,3,6,12,18,24,30,36,42,48,54,57,58)
+year_studies = Heart %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+
+#a line plot to show No of studies over years
+f <-ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of heart studies over the years") +
+  theme_minimal()
+```
+
+```{r,echo=FALSE}
+Pneumonia = read.csv("Pneumonia-studies.csv",
+                   check.names = F,
+                   na= "")
+
+#converting sex, Age and Study Status columns to factor
+Pneumonia$Sex = as.factor(Pneumonia$Sex)
+Pneumonia$Age = as.factor(Pneumonia$Age)
+Pneumonia$`Study Status` = as.factor(Pneumonia$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(Pneumonia))
+
+# Loop through each row
+for (i in 1:nrow(Pneumonia)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(Pneumonia$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+bye <- ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries conducting Pneumonia Research")+
+  theme_minimal()
+
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(Pneumonia)) 
+
+for (i in 1:nrow(Pneumonia)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(Pneumonia$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the Pneumonia dataframe
+Pneumonia = cbind(Pneumonia, year1)
+
+#converting year to numeric
+Pneumonia$year <- as.numeric(Pneumonia$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(1,2,5,9,10,11,12,15,16,20,25,30)
+year_studies = Pneumonia %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+
+#a line plot to show No of studies over years
+s <-ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of pneumonia studies over the years") +
+  theme_minimal()
+```
+
+```{r,echo=FALSE}
+HIV = read.csv("HIV-studies.csv",
+                   check.names = F,
+                   na= "")
+
+#converting sex, Age and Study Status columns to factor
+HIV$Sex = as.factor(HIV$Sex)
+HIV$Age = as.factor(HIV$Age)
+HIV$`Study Status` = as.factor(HIV$`Study Status`)
+
+# Create an empty vector to store the country names
+country <- vector("character", length = nrow(HIV))
+
+# Loop through each row
+for (i in 1:nrow(HIV)) {
+  # Split the "Locations" column for the current row
+  row_splits <- unlist(str_split(HIV$Locations[i], ","))
+  
+  # Calculate the number of countries for the current row
+  length_loc <- length(row_splits)
+  
+  # Store the country name for the current row
+  country[i] <- row_splits[length_loc]
+}
+
+#creating a countries dataframe
+country_df= data.frame(country)
+
+#grouping The column countries by the countries
+Country_study =country_df %>% 
+  group_by(country) %>% 
+  summarise(`No of Studies` = n())
+#arranging the dataset in descending order using the No of studies
+Country_study = Country_study[order(Country_study$`No of Studies`, decreasing = TRUE), ]
+#removing Nas
+Country_study = Country_study %>% 
+  filter(!is.na(Country_study$country))
+Country_study_top =head(Country_study, 10)
+
+honey <- ggplot(Country_study_top, aes(x=`No of Studies`, y=country,fill =country))+
+  geom_bar(stat="identity", col= "black")+
+  coord_cartesian(xlim = c(0,max(Country_study_top$`No of Studies`)))+
+  labs(title = "Top 10 countries doing AIDS research")+
+  theme_minimal()
+
+# Create an empty vector to store the years
+year <- vector("character", length = nrow(HIV)) 
+
+for (i in 1:nrow(HIV)) {
+  # Split the "Locations" column for the current row
+  row_splits1 <- unlist(str_split(HIV$`Start Date`[i], "-"))
+  
+  # Store the country name for the current row
+  year[i] <- row_splits1[1]
+}
+
+#converting the year vector to a dataframe
+year1 =data.frame(year)
+
+#merging the year dataframe with the HIV dataframe
+HIV = cbind(HIV, year1)
+
+#converting year to numeric
+HIV$year <- as.numeric(HIV$year)
+
+#grouping the years to the know the No of studies conducted each year
+a= c(1,2,5,9,10,11,12,15,16,20,25,30,33,36,39)
+year_studies = HIV %>% 
+  group_by(year) %>% 
+  summarise(`No of studies` = n()) %>% 
+  filter(!is.na(year))
+year_studies1=  year_studies[a, ]
+
+#a line plot to show No of studies over years
+z <-ggplot(year_studies1, aes(x = year, y = `No of studies`)) +
+  geom_point()+
+  #geom_smooth(method = "loess") +
+  geom_smooth(aes(group=1))+
+  labs(title = "A trend showing the increase in the No of HIV studies over the years") +
+  theme_minimal()
+```
+```{r, fig.show="hold",out.width="50%",echo=FALSE,warning=FALSE,message=FALSE}
+see
+you
+```
+
+```{r, fig.show="hold",out.width="50%", echo=FALSE,warning=FALSE, message=FALSE}
+soon
+good
+```
+
+```{r, fig.show="hold",out.width="50%", echo=FALSE,warning=FALSE,message=FALSE}
+bye
+honey
+```
+Trend lines to show the increase in the number of studies over time.
+```{r, fig.show="hold",out.width="50%", echo=FALSE, warning=FALSE, message=FALSE}
+f
+c
+```
+```{r, fig.show="hold",out.width="50%", echo=FALSE, warning=FALSE, message=FALSE}
+we
+s
+```
+```{r, fig.show="hold",out.width="50%",echo=FALSE, warning=FALSE, message=FALSE}
+z
+J
+```
+
+# **Conclusion**
+In general, the United States has demonstrated a substantial investment in research, evident by its consistent leading position in all the horizontal bar charts. Conversely, African countries appear to be lagging behind in the realm of research, as they rarely make significant appearances in most of the horizontal bar graphs.
+It is worth noting that there has been a continuous increase in the volume of research being conducted across the six diseases. This overall increase underscores the importance of ongoing research efforts in the field.
+
+
+
+# **Recommendations**
+To address disparities in research output and advance global scientific progress, several key recommendations emerge from the analysis.
+
+First, there is a need to increase research investments in African countries, as well as promote infrastructure, education, and money.
+Additionally, fostering collaboration with the United States and other leading research nations can accelerate knowledge exchange and resource sharing.
+Prioritizing research on diseases of global concern and encouraging interdisciplinary collaboration can spur innovation in crucial fields.
+Investing in educational and training programs is critical for developing a skilled research workforce, while encouraging data sharing and open access can help the global scientific community's joint efforts.
+Monitoring and benchmarking the progress of leading research countries, along with raising public awareness, is crucial for sustained support.
+
+By embracing these recommendations, the global research landscape can become more inclusive, collaborative, and effective in addressing pressing scientific and health challenges.
+
+
+
