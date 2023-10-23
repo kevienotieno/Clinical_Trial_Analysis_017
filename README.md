@@ -17,7 +17,8 @@ git clone https://github.com/your-username/Clinical_Trial_Analysis_017
 .git
 Install Dependencies: Ensure you have the necessary libraries or packages installed to run the analysis scripts. Refer to the documentation for specific requirements.
 
-Explore the Data: Start exploring the data by running the provided Jupyter notebooks or R scripts. These scripts are well-documented and will guide you through the analysis process.
+Explore the Data: Start exploring the data by running the provided R markdown files. These scripts are well-documented and will guide you through the analysis process.
+To also visualize the code together with the results download the html files.
 
 Contribute: If you'd like to contribute to the project, please follow the contribution guidelines in the project's documentation.
 # Documentation
